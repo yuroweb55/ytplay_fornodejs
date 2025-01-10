@@ -88,6 +88,9 @@ app.get('/play_video', (req, res) => {
                 // ส่งข้อมูลวิดีโอไปยัง Client แบบ Stream
                 videoRes.pipe(res);
             } else {
+                 if(req.query.idvideo){
+                    return res.redirect('/?id='+req.query.idvideo);
+                }
                 res.status(statusCode).send('Failed to fetch video');
             }
         }).on('error', (err) => {
