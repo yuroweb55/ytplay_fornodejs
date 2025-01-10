@@ -22,7 +22,7 @@ app.get('/', async (req, res) => {
 
             if (data.url) {
                 if (req.aborted) { return; }
-                res.redirect('/play_video?url='+encodeURIComponent(data.url));
+                res.redirect('/play_video?url='+encodeURIComponent(data.url)+'&idvideo='+id);
             } else {
                 return res.status(404).json({ error: 'ไม่พบวิดีโอ '+quality+' ที่พร้อมใช้งาน' });
             }
@@ -78,7 +78,12 @@ app.get('/play_video', (req, res) => {
                 // ส่งข้อมูลวิดีโอไปยัง Client แบบ Stream
                 videoRes.pipe(res);
             } else {
-                res.status(statusCode).send('Failed to fetch video');
+                if(req.query.idvideo){
+                    res.redirect('/id='+req.query.idvideo);
+                }else{
+                    res.status(statusCode).send('Failed to fetch video');
+                }
+                
             }
         }).on('error', (err) => {
             console.error('Error fetching video:', err.message);
