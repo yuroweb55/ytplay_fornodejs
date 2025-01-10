@@ -79,7 +79,7 @@ app.get('/play_video', (req, res) => {
                 videoRes.pipe(res);
             } else {
                 if(req.query.idvideo){
-                    res.redirect('/id='+req.query.idvideo);
+                    res.redirect('/?id='+req.query.idvideo);
                 }else{
                     res.status(statusCode).send('Failed to fetch video');
                 }
