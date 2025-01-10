@@ -43,7 +43,16 @@ app.get('/play_video', (req, res) => {
         }
         videoUrl = decodeURIComponent(videoUrl);
 
-        const range = req.headers.range || 'bytes=0-';
+        const rangeHeader = req.headers.range || 'bytes=0-';
+        const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+
+        if (!rangeMatch) {
+            return res.status(416).send('Invalid Range header');
+        }
+
+        const start = parseInt(rangeMatch[1], 10);
+        const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : start + 1024 * 1024 - 1; // 1MB
+        const range = `bytes=${start}-${end}`;
 
         // ตั้งค่า Header
         const headers = {
@@ -67,22 +76,19 @@ app.get('/play_video', (req, res) => {
             const contentType = videoRes.headers['content-type'];
 
             // ตรวจสอบสถานะการตอบกลับ
-            if (statusCode === 200 || statusCode === 206) {
+            if (statusCode === 206) {
                 res.status(statusCode).set({
                     'Content-Range': contentRange || '',
                     'Accept-Ranges': 'bytes',
                     'Content-Type': contentType,
-                    'Connection': 'keep-alive',  // ใช้ Keep-Alive สำหรับการเชื่อมต่อที่ยาวขึ้น
+                    'Content-Length': end - start + 1,
+                    'Connection': 'keep-alive', // ใช้ Keep-Alive สำหรับการเชื่อมต่อที่ยาวขึ้น
                 });
 
                 // ส่งข้อมูลวิดีโอไปยัง Client แบบ Stream
                 videoRes.pipe(res);
             } else {
-                if(req.query.idvideo){
-                    res.redirect('/?id='+req.query.idvideo);
-                }else{
-                    res.status(statusCode).send('Failed to fetch video');
-                }
+                res.status(statusCode).send('Failed to fetch video');
             }
         }).on('error', (err) => {
             console.error('Error fetching video:', err.message);
